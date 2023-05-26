@@ -1,21 +1,23 @@
 
+async function planetDetailsFromAPI(url) {
+  const response = await fetch(url);
+  const planet = await response.json();
+
+  return planet;
+}
+
+
 function createPlanetElement(planet) {
   container = document.createElement('div');
 
-  container.innerHTML = `
-    <button>${planet.name}</button>
-  `;
+  container.innerHTML = `<button>${planet.name}</button>`;
 
   return container;
 }
 
-async function showDetails(e) {
-  const url = e.target.parentElement.dataset.detailsUrl;
+function createPlaneteDetailsElement(planet) {
   const container = document.createElement('div');
-
-  const response = await fetch(url);
-  const { name, climate, population, terrain } = await response.json()
-
+  const { name, climate, population, terrain } = planet;
 
   container.innerHTML = `
     <div>
@@ -23,11 +25,51 @@ async function showDetails(e) {
       <p>Clima: ${climate}</p>
       <p>População: ${population}</p>
       <p>Tipo de terreno: ${terrain}</p>
-    </div>
-  `;
+    </div>`;
 
-  e.target.replaceWith(container);
+  return container;
 }
+
+async function showPlanetDetails(event) {
+  const url = event.target.parentElement.dataset.detailsUrl;
+  const planet = await planetDetailsFromAPI(url);
+  const planetElement = createPlaneteDetailsElement(planet);
+
+  event.target.replaceWith(planetElement);
+}
+
+
+
+window.addEventListener('load' ,() => {
+  const planetSearch = document.getElementById('planet-search');
+
+  planetSearch.addEventListener('click', () => {
+    const planetField = document.getElementById('planet-field');
+    const searchResult = document.getElementById('search-results');
+    const querySearch = planetField.value;
+    const url = new URL('/api/planets', 'https://swapi.dev');
+
+    url.searchParams.append('search', querySearch);
+    searchResult.innerHTML = '';
+
+    fetch(url)
+      .then(response => response.json())
+      .then(({results}) => {
+        results.forEach(planet => {
+          planetElement = createPlaneteDetailsElement(planet);
+
+          searchResult.appendChild(planetElement);
+        })
+      })
+      .catch(() => {
+        const notFoundElementPresentation = document.createElement('p');
+
+        notFoundElementPresentation.textContent = 'Não há correspondência para #' + querySearch;
+
+        searchResult.appendChild(notFoundElementPresentation);
+      });
+  });
+})
 
 
 fetch('https://swapi.dev/api/planets')
@@ -43,6 +85,6 @@ fetch('https://swapi.dev/api/planets')
       planetsSection.appendChild(planetElement);
       planetElement
         .querySelector('button')
-        .addEventListener('click', showDetails);
+        .addEventListener('click', showPlanetDetails);
     });
   });
