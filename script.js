@@ -59,8 +59,8 @@ async function createPlaneteDetailsElement(planet) {
   const { name, climate, population, terrain, residents } = planet;
 
   const people = await Promise.all(residents.map(personDetailsFromAPI));
+  const peopleDetailsTable = createPeopleDetailsTable(people);
 
-  console.log(people, residents)
 
   container.innerHTML = `
     <div>
@@ -72,7 +72,6 @@ async function createPlaneteDetailsElement(planet) {
       <div>
     </div>`;
 
-  peopleDetailsTable = createPeopleDetailsTable(people);
   container.appendChild(peopleDetailsTable);
 
   return container;
