@@ -6,6 +6,13 @@ async function planetDetailsFromAPI(url) {
   return planet;
 }
 
+async function personDetailsFromAPI(url) {
+  const response = await fetch(url);
+  const person = await response.json();
+
+  return person;
+}
+
 
 function createPlanetElement(planet) {
   container = document.createElement('div');
@@ -15,17 +22,58 @@ function createPlanetElement(planet) {
   return container;
 }
 
-function createPlaneteDetailsElement(planet) {
+function createPeopleDetailsTable(people) {
   const container = document.createElement('div');
-  const { name, climate, population, terrain } = planet;
+  const table = document.createElement('table');
+  const tbody = document.createElement('tbody');
+
+  container.innerHTML = '<p>Habitantes mais famosos do planeta</p>';
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Data de nascimento</th>
+      </tr>
+  `
+
+  people.forEach(person => {
+    const tableRow = document.createElement('tr');
+    
+    tableRow.innerHTML = `
+      <td>${person.name}</td>
+      <td>${person.birth_year}</td>
+    `;
+
+    tbody.appendChild(tableRow);
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+
+  return container;
+}
+
+async function createPlaneteDetailsElement(planet) {
+  const container = document.createElement('div');
+  const { name, climate, population, terrain, residents } = planet;
+
+  const people = await Promise.all(residents.map(personDetailsFromAPI));
+
+  console.log(people, residents)
 
   container.innerHTML = `
     <div>
-      <h2>Nome: ${name}</h2>
-      <p>Clima: ${climate}</p>
-      <p>População: ${population}</p>
-      <p>Tipo de terreno: ${terrain}</p>
+      <div>
+        <h2>Nome: ${name}</h2>
+        <p>Clima: ${climate}</p>
+        <p>População: ${population}</p>
+        <p>Tipo de terreno: ${terrain}</p>
+      <div>
     </div>`;
+
+  peopleDetailsTable = createPeopleDetailsTable(people);
+  container.appendChild(peopleDetailsTable);
 
   return container;
 }
@@ -33,7 +81,7 @@ function createPlaneteDetailsElement(planet) {
 async function showPlanetDetails(event) {
   const url = event.target.parentElement.dataset.detailsUrl;
   const planet = await planetDetailsFromAPI(url);
-  const planetElement = createPlaneteDetailsElement(planet);
+  const planetElement = await createPlaneteDetailsElement(planet);
 
   event.target.replaceWith(planetElement);
 }
