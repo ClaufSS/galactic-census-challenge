@@ -40,7 +40,7 @@ async function showPlanetDetails(event) {
 
 
 
-window.addEventListener('load' ,() => {
+window.addEventListener('load', () => {
   const planetSearch = document.getElementById('planet-search');
 
   planetSearch.addEventListener('click', () => {
@@ -59,14 +59,15 @@ window.addEventListener('load' ,() => {
           planetElement = createPlaneteDetailsElement(planet);
 
           searchResult.appendChild(planetElement);
-        })
-      })
-      .catch(() => {
-        const notFoundElementPresentation = document.createElement('p');
+        });
 
-        notFoundElementPresentation.textContent = 'Não há correspondência para #' + querySearch;
+        if (results.length === 0) {
+          const notFoundElementPresentation = document.createElement('p');
 
-        searchResult.appendChild(notFoundElementPresentation);
+          notFoundElementPresentation.textContent = 'Não há correspondência para #' + querySearch;
+
+          searchResult.appendChild(notFoundElementPresentation);
+        }
       });
   });
 })
