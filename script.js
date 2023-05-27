@@ -13,6 +13,12 @@ async function personDetailsFromAPI(url) {
   return person;
 }
 
+async function peopleFromPlanet(planet) {
+  const {residents} = planet;
+
+  return Promise.all(residents.map(personDetailsFromAPI));
+}
+
 
 function createPlanetElement(planet) {
   container = document.createElement('div');
@@ -23,6 +29,10 @@ function createPlanetElement(planet) {
 }
 
 function createPeopleDetailsTable(people) {
+  if (people.length === 0) {
+    return document.createTextNode('');
+  }
+
   const container = document.createElement('div');
   const table = document.createElement('table');
   const tbody = document.createElement('tbody');
@@ -54,13 +64,9 @@ function createPeopleDetailsTable(people) {
   return container;
 }
 
-async function createPlaneteDetailsElement(planet) {
+function createPlaneteDetailsElement(planet) {
   const container = document.createElement('div');
-  const { name, climate, population, terrain, residents } = planet;
-
-  const people = await Promise.all(residents.map(personDetailsFromAPI));
-  const peopleDetailsTable = createPeopleDetailsTable(people);
-
+  const { name, climate, population, terrain } = planet;
 
   container.innerHTML = `
     <div>
@@ -72,15 +78,23 @@ async function createPlaneteDetailsElement(planet) {
       <div>
     </div>`;
 
-  container.appendChild(peopleDetailsTable);
-
   return container;
+}
+
+async function buildPlanetDetailsElement(planet) {
+  const people  = await peopleFromPlanet(planet);
+  const planetElement = createPlaneteDetailsElement(planet);
+  const peopleDetailsTable = createPeopleDetailsTable(people);
+
+  planetElement.appendChild(peopleDetailsTable);
+
+  return planetElement;
 }
 
 async function showPlanetDetails(event) {
   const url = event.target.parentElement.dataset.detailsUrl;
   const planet = await planetDetailsFromAPI(url);
-  const planetElement = await createPlaneteDetailsElement(planet);
+  const planetElement = await buildPlanetDetailsElement(planet);
 
   event.target.replaceWith(planetElement);
 }
@@ -99,25 +113,23 @@ window.addEventListener('load', () => {
     url.searchParams.append('search', querySearch);
     searchResult.innerHTML = '';
 
+
     fetch(url)
       .then(response => response.json())
-      .then(({results}) => {
-        results.forEach(planet => {
-          planetElement = createPlaneteDetailsElement(planet);
+      .then(({results}) => Promise.all(results.map(buildPlanetDetailsElement)))
+      .then(planetElements => {
 
-          searchResult.appendChild(planetElement);
-        });
-
-        if (results.length === 0) {
+        if (planetElements.length === 0) {
           const notFoundElementPresentation = document.createElement('p');
 
           notFoundElementPresentation.textContent = 'Não há correspondência para #' + querySearch;
-
           searchResult.appendChild(notFoundElementPresentation);
         }
+
+        planetElements.forEach(node => searchResult.appendChild(node));
       });
   });
-})
+});
 
 
 fetch('https://swapi.dev/api/planets')
